@@ -1,86 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Pulse - Live World Snapshot Board</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-    h1 { text-align: center; }
-    .filter { margin: 20px; text-align: center; }
-    .cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-    .card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 15px; width: 250px; }
-    .card h3 { margin-top: 0; }
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #e0f7fa, #f4f6f8);
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px;
+      color: #004d40;
+    }
+
+    .filter {
+      text-align: center;
+      margin: 20px;
+    }
+
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 280px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    .card img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+
+    /* Earthquake magnitude color coding */
+    .magnitude-low { border-top: 6px solid #4caf50; }   /* green */
+    .magnitude-mid { border-top: 6px solid #ff9800; }   /* orange */
+    .magnitude-high { border-top: 6px solid #f44336; }  /* red */
+
+    /* ISS card styling */
+    .iss-card {
+      background: #001f3f;
+      color: #fff;
+      border-top: 6px solid #00bcd4;
+    }
   </style>
 </head>
 <body>
-  <h1>Pulse - Live World Snapshot Board</h1>
+  <h1>Pulse - Live World Snapshot Board 🌍</h1>
+
   <div class="filter">
-    <label for="magFilter">Show earthquakes above magnitude:</label>
-    <select id="magFilter">
-      <option value="0">All</option>
-      <option value="2">2.0</option>
-      <option value="4">4.0</option>
-      <option value="6">6.0</option>
+    <label for="magnitudeFilter">Show earthquakes above magnitude:</label>
+    <select id="magnitudeFilter">
+      <option value="all">All</option>
+      <option value="3">3.0+</option>
+      <option value="4">4.0+</option>
+      <option value="5">5.0+</option>
     </select>
   </div>
-  <div class="cards" id="cards"></div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  <div class="cards" id="cards">
+    <!-- Example Earthquake Card -->
+    <div class="card magnitude-high">
+      <img src="https://img.freepik.com/premium-vector/earthquake-disaster-flat-icons-symbol-warning-sign_480348-295.jpg?w=2000" alt="Earthquake Icon">
+      <h3>California, USA</h3>
+      <p>Magnitude: 6.2</p>
+      <p>Time: 2026-08-30T20:15:00Z</p>
+    </div>
 
-    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"; // Replace
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";      // Replace
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Example ISS Card -->
+    <div class="card iss-card">
+      <img src="https://img.icons8.com/color/96/satellite.png" alt="ISS Icon">
+      <h3>International Space Station</h3>
+      <p>Longitude: 12.34</p>
+      <p>Latitude: -45.67</p>
+      <p>Timestamp: 1693425600</p>
+    </div>
+  </div>
 
-    const cardsDiv = document.getElementById("cards");
-    const magFilter = document.getElementById("magFilter");
-
-    async function loadData() {
-      cardsDiv.innerHTML = "";
-
-      const { data: quakes } = await supabase
-        .from("earthquakes")
-        .select("*")
-        .order("time", { ascending: false });
-
-      const { data: iss } = await supabase
-        .from("iss_location")
-        .select("*")
-        .order("timestamp", { ascending: false })
-        .limit(1);
-
-      const minMag = parseFloat(magFilter.value);
-      const filteredQuakes = quakes.filter(q => q.magnitude >= minMag);
-
-      // Render earthquakes
-      filteredQuakes.forEach(q => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>Earthquake</h3>
-          <p><strong>Place:</strong> ${q.place}</p>
-          <p><strong>Magnitude:</strong> ${q.magnitude}</p>
-          <p><strong>Time:</strong> ${new Date(q.time).toLocaleString()}</p>
-          <p><strong>Coords:</strong> ${q.latitude}, ${q.longitude}</p>
-        `;
-        cardsDiv.appendChild(card);
-      });
-
-      // Render ISS
-      if (iss.length > 0) {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>ISS Location</h3>
-          <p><strong>Timestamp:</strong> ${iss[0].timestamp}</p>
-          <p><strong>Coords:</strong> ${iss[0].latitude}, ${iss[0].longitude}</p>
-        `;
-        cardsDiv.appendChild(card);
-      }
-    }
-
-    magFilter.addEventListener("change", loadData);
-    loadData();
+  <script>
+    // Later you’ll fetch live data from Supabase and dynamically build cards
+    // For now, these example cards show the styling and visuals
   </script>
 </body>
 </html>
