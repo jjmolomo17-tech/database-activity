@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pulse - Live World Snapshot Board</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+    h1 { text-align: center; }
+    .filter { margin: 20px; text-align: center; }
+    .cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 15px; width: 250px; }
+    .card h3 { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Pulse - Live World Snapshot Board</h1>
+  <div class="filter">
+    <label for="magFilter">Show earthquakes above magnitude:</label>
+    <select id="magFilter">
+      <option value="0">All</option>
+      <option value="2">2.0</option>
+      <option value="4">4.0</option>
+      <option value="6">6.0</option>
+    </select>
+  </div>
+  <div class="cards" id="cards"></div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"; // Replace
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";      // Replace
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const cardsDiv = document.getElementById("cards");
+    const magFilter = document.getElementById("magFilter");
+
+    async function loadData() {
+      cardsDiv.innerHTML = "";
+
+      const { data: quakes } = await supabase
+        .from("earthquakes")
+        .select("*")
+        .order("time", { ascending: false });
+
+      const { data: iss } = await supabase
+        .from("iss_location")
+        .select("*")
+        .order("timestamp", { ascending: false })
+        .limit(1);
+
+      const minMag = parseFloat(magFilter.value);
+      const filteredQuakes = quakes.filter(q => q.magnitude >= minMag);
+
+      // Render earthquakes
+      filteredQuakes.forEach(q => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>Earthquake</h3>
+          <p><strong>Place:</strong> ${q.place}</p>
+          <p><strong>Magnitude:</strong> ${q.magnitude}</p>
+          <p><strong>Time:</strong> ${new Date(q.time).toLocaleString()}</p>
+          <p><strong>Coords:</strong> ${q.latitude}, ${q.longitude}</p>
+        `;
+        cardsDiv.appendChild(card);
+      });
+
+      // Render ISS
+      if (iss.length > 0) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>ISS Location</h3>
+          <p><strong>Timestamp:</strong> ${iss[0].timestamp}</p>
+          <p><strong>Coords:</strong> ${iss[0].latitude}, ${iss[0].longitude}</p>
+        `;
+        cardsDiv.appendChild(card);
+      }
+    }
+
+    magFilter.addEventListener("change", loadData);
+    loadData();
+  </script>
+</body>
+</html>
