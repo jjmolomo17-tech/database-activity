@@ -98,8 +98,30 @@
   </div>
 
   <script>
-    // Later you’ll fetch live data from Supabase and dynamically build cards
-    // For now, these example cards show the styling and visuals
+  
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Example: fetch earthquakes
+  async function loadEarthquakes() {
+    const { data, error } = await client
+      .from('earthquakes')
+      .select('*')
+      .order('time', { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      console.log(data);
+      // render cards here
+    }
+  }
+
+  loadEarthquakes();
+
+
   </script>
 </body>
 </html>
